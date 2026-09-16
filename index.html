@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neuromorphe Chips – Interaktives Lernmodul</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#1c2238; --muted:#5b6478;
+    --primary:#4f46e5; --primary-dark:#372f9e; --secondary:#0891b2;
+    --accent:#f59e0b; --success:#15803d; --success-bg:#ecfdf5; --success-bd:#86efac;
+    --error:#b91c1c; --error-bg:#fef2f2; --error-bd:#fca5a5; --border:#e2e5ef;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{line-height:1.25; font-weight:750;}
+  a{color:var(--primary-dark);}
+  .site-header{
+    background:
+      radial-gradient(circle at 18% 30%, rgba(255,255,255,.16) 0, rgba(255,255,255,0) 6%),
+      radial-gradient(circle at 82% 60%, rgba(255,255,255,.14) 0, rgba(255,255,255,0) 7%),
+      radial-gradient(circle at 50% 85%, rgba(255,255,255,.12) 0, rgba(255,255,255,0) 5%),
+      linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color:#fff; padding:34px 20px 28px; text-align:center;
+  }
+  .header-inner{max-width:820px; margin:0 auto;}
+  .eyebrow{
+    text-transform:uppercase; letter-spacing:.08em; font-size:12.5px; font-weight:700;
+    opacity:.9; margin:0 0 10px;
+  }
+  .site-header h1{font-size:clamp(28px,5vw,42px); margin:0 0 10px;}
+  .subtitle{font-size:16px; opacity:.95; margin:0; max-width:640px; margin:0 auto;}
+
+  .tabbar{
+    position:sticky; top:0; z-index:20; display:flex; overflow-x:auto;
+    background:#fff; border-bottom:1px solid var(--border);
+    box-shadow:0 2px 10px rgba(30,35,60,.05);
+  }
+  .tab{
+    flex:0 0 auto; border:none; background:transparent; padding:14px 16px;
+    font-size:13.5px; font-weight:650; color:var(--muted); cursor:pointer;
+    border-bottom:3px solid transparent; white-space:nowrap;
+  }
+  .tab:hover{color:var(--primary-dark);}
+  .tab.active{color:var(--primary-dark); border-bottom-color:var(--primary);}
+  .tab .dot{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--border); margin-right:7px; vertical-align:middle;
+  }
+  .tab.visited .dot{background:var(--success);}
+
+  .progress-wrap{
+    position:sticky; top:47px; z-index:19; background:#fff;
+    padding:8px 18px 10px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:14px;
+  }
+  .progress-label{font-size:12.5px; font-weight:700; color:var(--muted); white-space:nowrap;}
+  .progress-bar{flex:1; height:8px; background:#eef0f8; border-radius:99px; overflow:hidden;}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--primary), var(--secondary)); transition:width .4s ease;}
+
+  main{max-width:840px; margin:0 auto; padding:26px 18px 70px;}
+  .panel{display:none; animation:fade .35s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:22px 22px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(30,35,60,.04);
+  }
+  .panel h2{font-size:22px; color:var(--primary-dark); margin:0 0 4px;}
+  .panel .kicker{font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--secondary); font-weight:750; margin:0 0 6px;}
+  .panel p{margin:0 0 13px; font-size:15.5px;}
+  .panel p:last-child{margin-bottom:0;}
+
+  .fact-box{
+    background:#fffbeb; border:1px solid #fde68a; border-radius:12px;
+    padding:14px 16px; font-size:14.5px; margin:16px 0;
+  }
+  .fact-box b{color:#92400e;}
+
+  .video-wrap{
+    position:relative; padding-bottom:56.25%; height:0; overflow:hidden;
+    border-radius:14px; border:1px solid var(--border); margin:16px 0;
+  }
+  .video-wrap iframe{position:absolute; top:0; left:0; width:100%; height:100%; border:0;}
+  .video-link{font-size:13.5px; color:var(--muted);}
+
+  .glossary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-top:14px;}
+  .g-item{border:1px solid var(--border); border-radius:10px; padding:11px 13px; background:#f9faff;}
+  .g-item b{display:block; color:var(--primary-dark); font-size:13.5px; margin-bottom:3px;}
+  .g-item span{font-size:13px; color:var(--muted);}
+
+  .start-btn, .nav-btn, .btn-check, .btn-retry{
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+    font-weight:700; border-radius:10px; padding:11px 20px; font-size:14.5px;
+  }
+  .start-btn{background:#fff; color:var(--primary-dark); margin-top:10px;}
+  .start-btn:hover{background:#eef1ff;}
+  .nav-row{display:flex; justify-content:space-between; margin-top:22px; gap:10px;}
+  .nav-btn{background:var(--primary); color:#fff;}
+  .nav-btn.secondary{background:#eef0f8; color:var(--ink);}
+  .nav-btn:hover{filter:brightness(1.06);}
+  .nav-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+  .exercise{
+    border:1px solid var(--border); border-radius:14px; padding:18px 18px 20px;
+    margin:16px 0; background:#fafbff;
+  }
+  .ex-tag{
+    display:inline-block; font-size:11px; font-weight:800; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--secondary); background:#ecfeff;
+    border:1px solid #a5f3fc; padding:3px 9px; border-radius:99px; margin-bottom:10px;
+  }
+  .ex-prompt{font-size:15.5px; font-weight:650; margin:0 0 13px; color:var(--ink);}
+
+  .options{display:flex; flex-direction:column; gap:9px; margin-bottom:14px;}
+  .opt{
+    display:flex; align-items:flex-start; gap:10px; border:1px solid var(--border);
+    background:#fff; border-radius:10px; padding:10px 13px; cursor:pointer; font-size:14.5px;
+  }
+  .opt:hover{border-color:var(--primary);}
+  .opt input{margin-top:3px; flex:0 0 auto;}
+  .opt.opt-correct{background:var(--success-bg); border-color:var(--success-bd);}
+  .opt.opt-incorrect-pick{background:var(--error-bg); border-color:var(--error-bd);}
+  .opt.locked{cursor:default;}
+
+  .btn-check{background:var(--primary); color:#fff;}
+  .btn-check:hover{filter:brightness(1.07);}
+  .btn-check:disabled{opacity:.45; cursor:not-allowed;}
+
+  .ex-feedback{
+    margin-top:13px; padding:11px 14px; border-radius:10px; font-size:14px; display:none;
+  }
+  .ex-feedback.ok{background:var(--success-bg); border:1px solid var(--success-bd); color:#14532d;}
+  .ex-feedback.bad{background:var(--error-bg); border:1px solid var(--error-bd); color:#7f1d1d;}
+  .ex-feedback b{display:block; margin-bottom:3px;}
+
+  .tf-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border:1px solid var(--border); background:#fff; border-radius:10px;
+    padding:10px 13px; margin-bottom:9px; font-size:14.5px;
+  }
+  .tf-row .tf-text{flex:1;}
+  .tf-btns{display:flex; gap:6px; flex:0 0 auto;}
+  .tf-btn{
+    border:1px solid var(--border); background:#fff; border-radius:8px; padding:6px 12px;
+    font-size:13px; font-weight:700; cursor:pointer; color:var(--muted);
+  }
+  .tf-btn.sel{background:var(--primary); color:#fff; border-color:var(--primary);}
+  .tf-row.ok{background:var(--success-bg); border-color:var(--success-bd);}
+  .tf-row.bad{background:var(--error-bg); border-color:var(--error-bd);}
+
+  .match-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .match-col{display:flex; flex-direction:column; gap:9px;}
+  .match-col-title{font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:2px;}
+  .m-item{
+    border:1px solid var(--border); background:#fff; border-radius:10px; padding:10px 12px;
+    font-size:13.8px; cursor:pointer; text-align:left;
+  }
+  .m-item:hover{border-color:var(--primary);}
+  .m-item.selected{border-color:var(--primary); background:#eef1ff; box-shadow:0 0 0 2px rgba(79,70,229,.18);}
+  .m-item.solved{background:var(--success-bg); border-color:var(--success-bd); cursor:default;}
+  .m-item.wrong-flash{background:var(--error-bg); border-color:var(--error-bd);}
+  .m-item.disabled{opacity:.5; pointer-events:none;}
+  .match-status{font-size:13px; color:var(--muted); margin-top:12px;}
+
+  .fill-text{font-size:15.5px; line-height:2.2;}
+  .fill-text select{
+    font-family:inherit; font-size:14px; font-weight:700; color:var(--primary-dark);
+    border:1px solid var(--border); border-radius:8px; padding:5px 8px; margin:0 3px;
+    background:#fff;
+  }
+  .fill-text select.ok{border-color:var(--success-bd); background:var(--success-bg); color:#14532d;}
+  .fill-text select.bad{border-color:var(--error-bd); background:var(--error-bg); color:#7f1d1d;}
+
+  .results-box{text-align:center; padding:10px 6px;}
+  .results-score{font-size:44px; font-weight:800; color:var(--primary-dark); margin:6px 0 2px;}
+  .results-pct{font-size:15px; color:var(--muted); margin-bottom:14px;}
+  .results-msg{font-size:15.5px; font-weight:650; padding:12px 16px; border-radius:12px; margin:14px 0;}
+  .btn-retry{background:var(--accent); color:#4a2c00; margin-top:6px;}
+
+  .final-cta{text-align:center; margin-top:8px;}
+
+  footer{max-width:840px; margin:0 auto; padding:10px 18px 50px; font-size:12.5px; color:var(--muted);}
+  footer a{color:var(--muted);}
+  @media (max-width:560px){
+    .match-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <p class="eyebrow">Interaktives Lernmodul · Physik &amp; Informatik · 9. Klasse</p>
+    <h1>Neuromorphe Chips</h1>
+    <p class="subtitle">Wie ein deutsches Start-up Computerchips nach dem Vorbild des menschlichen Gehirns baut – und warum das die Zukunft der Datenverarbeitung verändern könnte.</p>
+  </div>
+</header>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab active" data-target="s0"><span class="dot"></span>Start</button>
+  <button class="tab" data-target="s1"><span class="dot"></span>1 · Das Problem</button>
+  <button class="tab" data-target="s2"><span class="dot"></span>2 · Vorbild Gehirn</button>
+  <button class="tab" data-target="s3"><span class="dot"></span>3 · Die Technik</button>
+  <button class="tab" data-target="s4"><span class="dot"></span>4 · Das Start-up</button>
+  <button class="tab" data-target="s5"><span class="dot"></span>5 · Vorteile</button>
+  <button class="tab" data-target="s6"><span class="dot"></span>6 · Zukunft</button>
+  <button class="tab" data-target="s7"><span class="dot"></span>Abschlusstest</button>
+</nav>
+
+<div class="progress-wrap">
+  <span class="progress-label" id="scoreText">0 / 0 Punkte</span>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<main id="main">
+
+  <!-- S0 START -->
+  <section id="s0" class="panel active">
+    <div class="card">
+      <p class="kicker">Worum geht's?</p>
+      <h2>Ein Chip, der wie ein Gehirn denkt</h2>
+      <p>Ein deutsches Start-up namens <b>TECHiFAB</b> entwickelt sogenannte <b>neuromorphe Chips</b> – Computerchips, die nach dem Vorbild des menschlichen Gehirns gebaut sind. Ihr Ziel: Computer, die deutlich weniger Energie brauchen als heutige Prozessoren und trotzdem leistungsfähig sind.</p>
+      <p>Grundlage dieses Lernmoduls ist ein Podcast-Interview mit der Physikerin <b>Prof. Dr. Heidemarie Krüger</b>, Gründerin von TECHiFAB, sowie ein Video dazu. Schau dir das Video an (oder lies dich direkt in die Themen ein) und bearbeite anschließend die Aufgaben in den Kapiteln 1 bis 6. Am Ende wartet ein Abschlusstest.</p>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/Z2UhRlDJ51Y" title="Neuromorphe Chips – Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+      </div>
+      <p class="video-link">Video: <a href="https://www.youtube.com/watch?v=Z2UhRlDJ51Y" target="_blank" rel="noopener">youtube.com/watch?v=Z2UhRlDJ51Y</a></p>
+      <div class="fact-box"><b>Gut zu wissen:</b> In jedem Kapitel gibt es kurze Erklärtexte und danach Aufgaben (Multiple-Choice, Richtig/Falsch, Zuordnungen und Lückentexte). Deine Punkte werden oben in der Fortschrittsleiste gesammelt – du kannst Aufgaben beliebig oft erneut prüfen.</div>
+      <button class="start-btn" style="background:var(--primary); color:#fff;" onclick="goTo('s1')">Los geht's →</button>
+    </div>
+  </section>
+
+  <!-- S1 -->
+  <section id="s1" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 1</p>
+      <h2>Das Problem klassischer Chips</h2>
+      <p>Stell dir vor, du sollst einen Text abschreiben – aber das Buch liegt nicht auf deinem Tisch, sondern in einem Regal am anderen Ende des Raumes. Für jedes Wort musst du aufstehen, zum Regal laufen, das Wort lesen, zurücklaufen und es aufschreiben. Das kostet enorm viel Zeit und Kraft, obwohl das eigentliche Schreiben ja schnell geht.</p>
+      <p>Genau dieses Problem haben klassische Computerchips aus Silizium: <b>Prozessor</b> (der rechnet) und <b>Speicher</b> (wo die Daten liegen) sind räumlich getrennt. Bei jeder Rechenoperation müssen Daten erst aus dem Speicher zum Prozessor und das Ergebnis wieder zurückgeschickt werden.</p>
+      <p>Dieses ständige Hin- und Herschieben – auch <b>Datentransfer</b> genannt – frisst enorm viel Energie: <b>Bis zu 99 Prozent</b> der Rechenleistung eines klassischen Chips gehen allein dafür drauf, nicht für das eigentliche Rechnen. Das ist auch der Grund, warum Prozessoren so warm werden und gekühlt werden müssen.</p>
+      <p>Neuromorphe Chips gehen einen anderen Weg: Sie bringen Verarbeitung und Speicherung so nah wie möglich zusammen. Schon heute schaffen sie es, dass nur noch etwa <b>30 Prozent</b> der Rechenleistung für den Datentransport gebraucht werden.</p>
+      <div class="fact-box"><b>Wusstest du schon?</b> Man nennt diesen ständigen Weg zwischen Prozessor und Speicher auch den „von-Neumann-Flaschenhals" – benannt nach der klassischen Computerarchitektur, die fast alle heutigen Rechner verwenden.</div>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q1_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q1_2"></div></div>
+      <div class="exercise"><span class="ex-tag">Richtig oder Falsch</span><div id="q1_3"></div></div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s0')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s2')">Weiter →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2 -->
+  <section id="s2" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 2</p>
+      <h2>Das Vorbild: unser Gehirn</h2>
+      <p>Das große Vorbild für neuromorphe Chips ist das menschliche Gehirn. Es besteht aus zwei zentralen „Bauteilen": <b>Neuronen</b> und <b>Synapsen</b>.</p>
+      <p><b>Neuronen</b> übernehmen die Signalleitung, den Signaltransport und die Verstärkung von Signalen. Sie funktionieren wie eine Art Schalter: Erst wenn ein bestimmtes „Aktionspotential" erreicht ist, leiten sie ein Signal weiter. Dabei haben sie sogar ein Gedächtnis – sie „merken", wie viele Daten bis zu einem Zeitpunkt bereits durchgeflossen sind, und passen daran ihre Schaltschwelle an.</p>
+      <p><b>Synapsen</b> sind die Verbindungsstücke zwischen zwei Neuronen. Sie verändern ihre Durchlässigkeit für Informationen – abhängig davon, was zuvor durch sie „gelernt" wurde. Genau dieses Lernen und Anpassen macht unser Gehirn so leistungsfähig.</p>
+      <p>Und das Erstaunlichste: Das Gehirn schafft das alles mit ungefähr <b>20 Watt</b> – etwa so viel wie eine kleine Energiesparlampe! Ein neuromorpher Chip, der zum Beispiel einen menschenähnlichen (humanoiden) Roboter steuert, braucht dafür heute rund <b>500 Watt</b>. Das klingt nach viel mehr – doch ein klassischer Silizium-Chip bräuchte für dieselbe Rechenleistung etwa das <b>10- bis 100-fache</b> an Energie im Vergleich zum neuromorphen Chip.</p>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q2_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice · mehrere Antworten</span><div id="q2_2"></div></div>
+      <div class="exercise"><span class="ex-tag">Zuordnung</span><div id="q2_3"></div></div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s1')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s3')">Weiter →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3 -->
+  <section id="s3" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 3</p>
+      <h2>Wie der Chip das Gehirn nachahmt</h2>
+      <p>Um Neuronen und Synapsen elektronisch nachzubauen, braucht man neue Bauelemente – denn klassische Bauteile können das nicht leisten.</p>
+      <p>Ein klassischer <b>Transistor</b> funktioniert zwar auch wie ein Schalter, der über eine Steuerspannung durchlässig wird. Aber seine „Schwellspannung" (der Punkt, ab dem er schaltet) ist bei der Herstellung fest eingebaut und lässt sich nicht verändern – egal, wie viele Daten vorher durch ihn geflossen sind. Für ein künstliches <b>Neuron</b> braucht man aber einen Transistor mit <b>einstellbarer, veränderlicher Schwellspannung</b> – daran forscht TECHiFAB.</p>
+      <p>Für die <b>Synapse</b> gibt es bereits eine Lösung: den <b>Memristor</b> – ein Kunstwort aus „Memory" (Speicher) und „Resistor" (Widerstand). Ein Memristor ist ein <b>passives</b> Bauelement, genau wie der normale Widerstand, die Spule und der Kondensator. Seine Besonderheit: Sein elektrischer Widerstand lässt sich verändern – und bleibt danach erhalten, auch ohne Strom („nicht flüchtig"). Ist der Widerstand klein, lässt der Memristor viele Informationen durch; ist er groß, lässt er wenige durch – genau wie eine Synapse.</p>
+
+      <div class="fact-box"><b>Wusstest du schon?</b> Ideal wäre ein Memristor, dessen Widerstand sich fein und stufenlos (analog) einstellen lässt – so wie eine echte Synapse. Bisherige Memristoren konnten das oft nur digital, also in groben Sprüngen.</div>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q3_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Zuordnung</span><div id="q3_2"></div></div>
+      <div class="exercise"><span class="ex-tag">Lückentext</span><div id="q3_3"></div></div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s2')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s4')">Weiter →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S4 -->
+  <section id="s4" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 4</p>
+      <h2>Das Start-up TECHiFAB</h2>
+      <p>Hinter der Technologie steckt das deutsche Start-up <b>TECHiFAB</b> mit Sitz in <b>Dresden</b> – einer Stadt, die als Zentrum der deutschen Mikroelektronik gilt. TECHiFAB wurde <b>2021</b> gegründet, als Ausgründung aus dem <b>Helmholtz-Zentrum Dresden-Rossendorf</b>.</p>
+      <p>Gründerin ist die Physikerin <b>Prof. Dr. Heidemarie Krüger</b>, die weiterhin an der <b>Friedrich-Schiller-Universität Jena</b> forscht und lehrt – unter anderem zu quantenoptischen Detektoren, einem ganz anderen Forschungsfeld.</p>
+      <p>Der Schlüssel zur Technologie war ein Materialfund: Bereits <b>2011</b> entdeckte das Team am Helmholtz-Zentrum Dresden-Rossendorf, dass sich aus <b>Bismut-Eisenoxid</b> Memristoren herstellen lassen, deren Widerstand sich fein-analog und ressourceneffizient einstellen lässt – die künstliche Synapse war geboren. Der passende künstliche „Neuron"-Transistor mit einstellbarer Schwellspannung auf derselben Materialplattform gelang dem Team viele Jahre später.</p>
+      <p>Gefördert wird das Projekt von der <b>SPRIND</b> (Bundesagentur für Sprunginnovationen) – einer staatlichen Agentur, die riskante, aber vielversprechende „Deep-Tech"-Ideen finanziell unterstützt, damit aus einer Laborentdeckung tatsächlich ein serienreifes Bauteil werden kann.</p>
+
+      <div class="exercise"><span class="ex-tag">Zuordnung</span><div id="q4_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q4_2"></div></div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s3')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s5')">Weiter →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S5 -->
+  <section id="s5" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 5</p>
+      <h2>Vorteile und Anwendungen</h2>
+      <p>Weil bei neuromorphen Chips Verarbeitung und Speicherung am selben Ort stattfinden, entfällt der zeitraubende Datentransfer-Schritt. Das ist deshalb so wertvoll, weil dieser Schritt <b>seriell</b> ist – er lässt sich nicht parallelisieren und wirkt wie ein Nadelöhr. Fällt er weg, lassen sich andere, hochparallele Rechenverfahren nutzen, was Berechnungen zusätzlich beschleunigt.</p>
+      <p>Ein wichtiges Einsatzfeld ist <b>Edge Computing</b>: Daten werden direkt „an der Kante" – also am Sensor oder Gerät selbst – vorverarbeitet, statt sie ungefiltert in die Cloud zu schicken. Das spart Energie, ermöglicht Echtzeit-Verarbeitung und schützt sensible Daten, weil nur bereits reduzierte, vorverarbeitete Informationen weitergeschickt werden müssen.</p>
+      <p>Mögliche Anwendungen reichen von einfachen Aufgaben wie <b>Infrastruktur-Monitoring</b> und <b>vorausschauender Wartung</b> von Maschinen bis zu komplexeren KI-Aufgaben wie <b>Bilderkennung</b> beim autonomen Fahren oder in der Robotik.</p>
+      <div class="fact-box"><b>Wusstest du schon?</b> Im Jahr 2025 verbrauchten Rechenzentren weltweit rund 2 Prozent der gesamten Elektrizität – etwa die Hälfte davon allein für das Ausführen von KI-Modellen wie großen Sprachmodellen. Energieeffizientere Hardware könnte hier viel bewirken.</div>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice · mehrere Antworten</span><div id="q5_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Richtig oder Falsch</span><div id="q5_2"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q5_3"></div></div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s4')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s6')">Weiter →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S6 -->
+  <section id="s6" class="panel">
+    <div class="card">
+      <p class="kicker">Kapitel 6</p>
+      <h2>Herausforderungen und Zukunft</h2>
+      <p>Neuromorphe Chips stecken heute noch nicht in unseren Smartphones. Der Grund: Die bislang erreichte Energieersparnis reicht noch nicht aus, um den großen Aufwand zu rechtfertigen, eine komplett neue Computerarchitektur einzuführen. Die etablierte, klassische Technik funktioniert einfach schon sehr gut. Es braucht, wie Heidemarie Krüger es nennt, eine <b>„disruptive Lösung"</b> – einen Vorteil, der so groß ist, dass sich der Umstieg lohnt.</p>
+      <p>Für die neuartigen Bauelemente selbst – Memristor und einstellbarer Transistor auf Bismut-Eisenoxid-Basis – gibt es aktuell weltweit noch <b>keinen direkten Wettbewerber</b>. Beim fertigen Chip insgesamt, der aus klassischen Bauelementen hergestellt und optimiert wird, existiert dagegen durchaus Wettbewerb.</p>
+      <p>Als Zukunftsszenario wünscht sich TECHiFAB einen großen Partner, der gemeinsam mit ihnen eine konkrete Anwendung entwickelt – etwa einen Automobilhersteller, der neuromorphe Chips für autonomes Fahren einsetzt, oder einen Chiphersteller, der die Technologie in eigene Produkte integriert.</p>
+      <p>Mit Blick auf die fernere Zukunft (2050) wünscht sich Heidemarie Krüger vor allem eines: KI-Trainingsalgorithmen, die <b>transparent und nachvollziehbar</b> sind und exakte statt nur angenäherte Lösungen finden – damit wir Entscheidungen von KI-Systemen besser verstehen und ihnen vertrauen können.</p>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="q6_1"></div></div>
+      <div class="exercise"><span class="ex-tag">Richtig oder Falsch</span><div id="q6_2"></div></div>
+
+      <div class="glossary-grid">
+        <div class="g-item"><b>Von-Neumann-Flaschenhals</b><span>Zeit- und Energieverlust durch getrennten Prozessor und Speicher</span></div>
+        <div class="g-item"><b>Memristor</b><span>Passives Bauelement mit einstellbarem, „erinnerbarem" Widerstand – künstliche Synapse</span></div>
+        <div class="g-item"><b>Einstellbarer Transistor</b><span>Bauelement mit veränderbarer Schwellspannung – künstliches Neuron</span></div>
+        <div class="g-item"><b>Edge Computing</b><span>Datenverarbeitung direkt am Sensor, statt alles in die Cloud zu schicken</span></div>
+        <div class="g-item"><b>TECHiFAB</b><span>2021 gegründetes Dresdner Start-up für neuromorphe Chips</span></div>
+        <div class="g-item"><b>Bismut-Eisenoxid</b><span>2011 entdecktes Material für analoge, ressourcenschonende Memristoren</span></div>
+      </div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s5')">← Zurück</button>
+        <button class="nav-btn" onclick="goTo('s7')">Zum Abschlusstest →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7 TEST -->
+  <section id="s7" class="panel">
+    <div class="card">
+      <p class="kicker">Abschlusstest</p>
+      <h2>Teste dein Gesamtverständnis</h2>
+      <p>Dieser Test kombiniert Fragen aus allen sechs Kapiteln – in unterschiedlichen Aufgabenformen. Bearbeite alle Aufgaben und sieh dir am Ende dein Ergebnis an.</p>
+
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="t1"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="t2"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="t3"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice · mehrere Antworten</span><div id="t4"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="t5"></div></div>
+      <div class="exercise"><span class="ex-tag">Multiple Choice</span><div id="t6"></div></div>
+      <div class="exercise"><span class="ex-tag">Richtig oder Falsch</span><div id="t7"></div></div>
+      <div class="exercise"><span class="ex-tag">Zuordnung</span><div id="t8"></div></div>
+
+      <div class="card" style="background:#f9faff;">
+        <div class="results-box">
+          <p class="kicker">Dein Ergebnis</p>
+          <div class="results-score" id="resultScore">0 / 0</div>
+          <div class="results-pct" id="resultPct">0 % richtig</div>
+          <div class="results-msg" id="resultMsg" style="display:none;"></div>
+          <button class="btn-retry" onclick="location.reload()">Modul neu starten</button>
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="nav-btn secondary" onclick="goTo('s6')">← Zurück</button>
+        <span></span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Quellen: Podcast-Transkript „SPRIND Podcast" mit Prof. Dr. Heidemarie Krüger (TECHiFAB) &middot;
+  Video: <a href="https://www.youtube.com/watch?v=Z2UhRlDJ51Y" target="_blank" rel="noopener">youtube.com/watch?v=Z2UhRlDJ51Y</a> &middot;
+  Lernmodul erstellt für den 9.-Klasse-Unterricht (Gymnasium).
+</footer>
+
+<script>
+/* ================== Navigation ================== */
+function goTo(id){
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  var tab = document.querySelector('.tab[data-target="'+id+'"]');
+  if(tab){ tab.classList.add('active'); tab.classList.add('visited'); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){ goTo(t.getAttribute('data-target')); });
+});
+
+/* ================== Scoring ================== */
+var EARNED = {};
+var TOTAL_POSSIBLE = 0;
+
+function pointsFor(q){
+  if(q.type==='single' || q.type==='multi') return 1;
+  if(q.type==='truefalse') return q.items.length;
+  if(q.type==='match') return q.pairs.length;
+  if(q.type==='fill') return q.blanks.length;
+  return 0;
+}
+function setScore(qid, earned){
+  EARNED[qid] = earned;
+  refreshScoreBar();
+}
+function refreshScoreBar(){
+  var e = 0;
+  Object.keys(EARNED).forEach(function(k){ e += EARNED[k]; });
+  var pct = TOTAL_POSSIBLE ? Math.round((e/TOTAL_POSSIBLE)*100) : 0;
+  document.getElementById('scoreText').textContent = e + ' / ' + TOTAL_POSSIBLE + ' Punkte';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  var resScore = document.getElementById('resultScore');
+  if(resScore){
+    resScore.textContent = e + ' / ' + TOTAL_POSSIBLE;
+    document.getElementById('resultPct').textContent = pct + ' % richtig';
+    var msg = document.getElementById('resultMsg');
+    var allAnswered = Object.keys(EARNED).length >= Object.keys(QUESTION_META).length;
+    if(allAnswered){
+      msg.style.display = 'block';
+      if(pct >= 90){ msg.style.background='var(--success-bg)'; msg.style.color='#14532d'; msg.textContent = 'Chip-Expertin bzw. Chip-Experte! Du hast neuromorphe Chips richtig gut verstanden.'; }
+      else if(pct >= 70){ msg.style.background='#fffbeb'; msg.style.color='#92400e'; msg.textContent = 'Gut gemacht! Ein paar Details lohnt es sich noch einmal nachzulesen.'; }
+      else { msg.style.background='var(--error-bg)'; msg.style.color='#7f1d1d'; msg.textContent = 'Schau dir die Kapitel noch einmal in Ruhe an, dann klappt es beim nächsten Versuch besser.'; }
+    }
+  }
+}
+
+/* ================== Question data ================== */
+var QUESTION_META = {}; // registry of all question ids -> true (for "answered all?" check)
+
+var singleData = [
+ {id:'q1_1', target:'q1_1', prompt:'Warum verbrauchen klassische Computerchips einen großen Teil ihrer Energie, obwohl sie eigentlich nur rechnen sollen?',
+  options:['Weil die Chips zu klein gebaut sind','Weil Prozessor und Speicher räumlich getrennt sind und Daten ständig hin- und hergeschoben werden müssen','Weil sie aus Silizium statt aus Metall bestehen','Weil sie zu viele Programme gleichzeitig ausführen'],
+  correct:1, explain:'Bis zu 99 % der Rechenleistung eines klassischen Chips gehen für den Datentransport zwischen Prozessor und Speicher drauf – nicht für das eigentliche Rechnen.'},
+ {id:'q1_2', target:'q1_2', prompt:'Wie viel Prozent ihrer Rechenleistung benötigen heutige neuromorphe Chips ungefähr noch für das Hin- und Herschieben von Daten?',
+  options:['Etwa 10 %','Etwa 30 %','Etwa 60 %','Etwa 99 %'],
+  correct:1, explain:'Neuromorphe Chips bringen Verarbeitung und Speicherung so nah zusammen, dass nur noch etwa 30 % der Rechenleistung für den Datentransport draufgehen.'},
+ {id:'q2_1', target:'q2_1', prompt:'Wie viel Rechenleistung benötigt das menschliche Gehirn ungefähr, um zu funktionieren?',
+  options:['2 Watt','Etwa 20 Watt','200 Watt','2000 Watt'],
+  correct:1, explain:'Das Gehirn kommt mit rund 20 Watt aus – ungefähr so viel wie eine kleine Energiesparlampe.'},
+ {id:'q3_1', target:'q3_1', prompt:'Was ist ein Memristor?',
+  options:['Ein passives Bauelement, dessen Widerstand einstellbar ist und "erinnert" wird (Memory + Resistor)','Ein neuer Name für den klassischen Transistor','Ein Bauteil, das nur Daten speichert, aber nie seinen Widerstand verändert','Ein Kühlkörper für Prozessoren'],
+  correct:0, explain:'Memristor = „Memory" + „Resistor". Ein passives Bauelement (wie Widerstand, Spule, Kondensator), dessen Widerstand sich verändern lässt und danach erhalten bleibt.'},
+ {id:'q4_2', target:'q4_2', prompt:'In welcher deutschen Stadt sitzt TECHiFAB, die auch als Zentrum der deutschen Mikroelektronik gilt?',
+  options:['Dresden','München','Berlin','Hamburg'],
+  correct:0, explain:'TECHiFAB sitzt in Dresden. Gründerin Heidemarie Krüger forscht zusätzlich an der Universität Jena.'},
+ {id:'q5_3', target:'q5_3', prompt:'Warum kann das Wegfallen des Datentransfer-Schritts die Verarbeitung zusätzlich beschleunigen?',
+  options:['Weil dieser Schritt seriell ist und sich nicht parallelisieren lässt – fällt er weg, kann der Rest besser parallel verarbeitet werden','Weil dadurch automatisch mehr Strom verfügbar ist','Weil der Chip dann kleiner gebaut werden kann','Weil die Daten dann komprimiert werden'],
+  correct:0, explain:'Der Datenablageschritt ist ein serieller „Flaschenhals". Fällt er weg, lassen sich hochparallele Verarbeitungsalgorithmen nutzen.'},
+ {id:'q6_1', target:'q6_1', prompt:'Warum stecken neuromorphe Chips heute noch nicht in jedem Smartphone?',
+  options:['Weil die bisherige Energieersparnis noch nicht groß genug ist, um eine komplett neue Computerarchitektur zu rechtfertigen','Weil es technisch unmöglich ist, sie zu bauen','Weil sie zu leicht kaputtgehen','Weil dafür kein Material existiert'],
+  correct:0, explain:'Es braucht eine „disruptive Lösung", damit der Vorteil groß genug ist, die etablierte klassische Architektur abzulösen.'},
+
+ {id:'t1', target:'t1', prompt:'Was ist das Hauptproblem klassischer Chips, das neuromorphe Chips lösen wollen?',
+  options:['Die räumliche Trennung von Prozessor und Speicher, die viel Energie für Datentransport kostet','Sie sind zu langsam getaktet','Sie haben zu wenig Speicherplatz','Sie können keine Bilder verarbeiten'],
+  correct:0, explain:'Genau dieses Problem – der energieaufwendige Datentransport – ist der Ausgangspunkt der neuromorphen Chip-Idee.'},
+ {id:'t2', target:'t2', prompt:'Welches Bauelement bildet im neuromorphen Chip die Funktion einer Synapse nach?',
+  options:['Der Memristor','Der Kondensator','Die Spule','Der Lautsprecher'],
+  correct:0, explain:'Der Memristor emuliert mit seinem einstellbaren, "erinnerbaren" Widerstand die Funktion der Synapse.'},
+ {id:'t3', target:'t3', prompt:'Welches Bauelement bildet im neuromorphen Chip die Funktion eines Neurons nach?',
+  options:['Ein Transistor mit fest eingestellter Schwellspannung','Ein Transistor mit einstellbarer Schwellspannung','Ein einfacher Widerstand','Eine Antenne'],
+  correct:1, explain:'Für das künstliche Neuron braucht es einen Transistor, dessen Schwellspannung sich verändern lässt – anders als beim klassischen Transistor.'},
+ {id:'t5', target:'t5', prompt:'Wie viel Energie benötigt das menschliche Gehirn ungefähr im Vergleich zu einem neuromorphen Chip, der einen humanoiden Roboter steuert?',
+  options:['Das Gehirn braucht etwa 20 Watt, der Chip etwa 500 Watt','Beide brauchen exakt gleich viel Energie','Das Gehirn braucht mehr Energie als der Chip','Beide brauchen mehr als 5000 Watt'],
+  correct:0, explain:'20 Watt (Gehirn) gegenüber rund 500 Watt (neuromorpher Chip für einen humanoiden Roboter) – ein klassischer Chip bräuchte dafür sogar 10- bis 100-mal mehr als der neuromorphe.'},
+ {id:'t6', target:'t6', prompt:"Was versteht man unter 'Edge Computing'?",
+  options:['Datenverarbeitung direkt am Sensor bzw. Gerät, statt alle Rohdaten in die Cloud zu schicken','Das Trainieren von KI ausschließlich in großen Rechenzentren','Eine besonders schnelle Internetverbindung','Ein neues Kühlverfahren für Chips'],
+  correct:0, explain:'Edge Computing bedeutet: Daten werden direkt „an der Kante" (am Sensor) reduziert und vorverarbeitet.'}
+];
+
+var multiData = [
+ {id:'q2_2', target:'q2_2', prompt:'Welche Aufgaben übernehmen Neuronen im Gehirn?',
+  options:['Signalleitung und Signaltransport','Verstärkung von Signalen','Speicherung von Fettreserven','Wirken wie ein Schalter mit "Gedächtnis" für ihre Schwellspannung'],
+  correct:[0,1,3], explain:'Neuronen leiten, transportieren und verstärken Signale und wirken wie Schalter mit Gedächtnis für ihre Schwellspannung. Fettreserven haben damit nichts zu tun.'},
+ {id:'q5_1', target:'q5_1', prompt:"Welche Vorteile bietet 'Edge Computing' mit neuromorphen Chips?",
+  options:['Daten werden schon am Sensor vorverarbeitet, bevor sie in die Cloud geschickt werden','Es entsteht eine Echtzeit-Datenverarbeitung','Sensible Daten müssen nicht unnötig übers Internet verschickt werden','Es werden automatisch mehr Rechenzentren gebaut'],
+  correct:[0,1,2], explain:'Edge Computing spart Energie, ermöglicht Echtzeit-Verarbeitung und schützt sensible Daten – es führt aber nicht automatisch zu mehr Rechenzentren.'},
+ {id:'t4', target:'t4', prompt:'Welche der folgenden Aussagen über das Start-up TECHiFAB sind richtig?',
+  options:['Es wurde 2021 gegründet','Es ist eine Ausgründung aus dem Helmholtz-Zentrum Dresden-Rossendorf','Es wurde 1995 gegründet, genau wie Nvidia','Gründerin Heidemarie Krüger forscht auch an der Universität Jena'],
+  correct:[0,1,3], explain:'TECHiFAB wurde 2021 als Ausgründung aus dem Helmholtz-Zentrum Dresden-Rossendorf gegründet. Nvidia wurde 1995 gegründet – TECHiFAB nicht.'}
+];
+
+var truefalseData = [
+ {id:'q1_3', target:'q1_3',
+  items:[
+    {text:'Ein klassischer Chip wird vor allem deshalb warm, weil er Daten zwischen Prozessor und Speicher transportieren muss.', correct:true},
+    {text:'In einem klassischen Chip liegen Prozessor und Speicher direkt am selben Ort.', correct:false},
+    {text:'Neuromorphe Chips versuchen, Verarbeitung und Speicherung räumlich näher zusammenzubringen.', correct:true}
+  ]},
+ {id:'q5_2', target:'q5_2',
+  items:[
+    {text:'Neuromorphe Chips könnten zum Beispiel bei der vorausschauenden Wartung von Maschinen eingesetzt werden.', correct:true},
+    {text:'Neuromorphe Chips eignen sich unter anderem für Bilderkennung, z. B. beim autonomen Fahren.', correct:true},
+    {text:'Im Jahr 2025 verbrauchten Rechenzentren weltweit gar keinen nennenswerten Anteil des Stroms.', correct:false}
+  ]},
+ {id:'q6_2', target:'q6_2',
+  items:[
+    {text:'Für die neuen Bauelemente (Memristor + einstellbarer Transistor) von TECHiFAB gibt es aktuell keinen direkten Wettbewerber.', correct:true},
+    {text:'TECHiFAB wünscht sich einen großen Partner, der gemeinsam mit ihnen eine Anwendung entwickelt, z. B. einen Automobilhersteller für autonomes Fahren.', correct:true},
+    {text:'Heidemarie Krüger findet, KI-Trainingsalgorithmen sollten künftig nur noch ungefähre, angenäherte Lösungen finden statt exakter Lösungen.', correct:false}
+  ]},
+ {id:'t7', target:'t7',
+  items:[
+    {text:'Neuromorphe Chips sind heute schon in jedem Smartphone verbaut.', correct:false},
+    {text:'Neuromorphe Chips können z. B. für vorausschauende Wartung oder Bilderkennung eingesetzt werden.', correct:true},
+    {text:'Ein Memristor ist – wie Widerstand, Spule und Kondensator – ein passives elektronisches Bauelement.', correct:true}
+  ]}
+];
+
+var matchData = [
+ {id:'q2_3', target:'q2_3', pairs:[
+    {term:'Gehirn (Mensch)', def:'≈ 20 Watt Rechenleistung'},
+    {term:'Neuromorpher Chip (humanoider Roboter)', def:'≈ 500 Watt Rechenleistung'},
+    {term:'Klassischer Silizium-Chip (gleiche Leistung)', def:'≈ 10- bis 100-mal mehr Energie als der neuromorphe Chip'}
+  ]},
+ {id:'q3_2', target:'q3_2', pairs:[
+    {term:'Neuron', def:'wird durch einen Transistor mit einstellbarer Schwellspannung nachgebildet'},
+    {term:'Synapse', def:'wird durch einen Memristor nachgebildet'},
+    {term:'Memristor', def:'Bauelement mit veränderbarem, "erinnerbarem" Widerstand'},
+    {term:'Klassischer Transistor', def:'hat eine feste, nicht einstellbare Schwellspannung'}
+  ]},
+ {id:'q4_1', target:'q4_1', pairs:[
+    {term:'TECHiFAB', def:'Start-up, 2021 gegründet, Ausgründung aus dem Helmholtz-Zentrum Dresden-Rossendorf'},
+    {term:'Bismut-Eisenoxid', def:'Material für künstliche Synapsen, 2011 entdeckt'},
+    {term:'Heidemarie Krüger', def:'Physikerin, forscht an der Uni Jena, Gründerin von TECHiFAB'},
+    {term:'SPRIND', def:'Bundesagentur für Sprunginnovationen, fördert das Projekt finanziell'}
+  ]},
+ {id:'t8', target:'t8', pairs:[
+    {term:'Neuron', def:'Signalleitung, -transport, -verstärkung; wirkt wie ein Schalter mit Gedächtnis'},
+    {term:'Synapse', def:'verändert ihre Durchlässigkeit je nachdem, was sie "gelernt" hat'},
+    {term:'Memristor', def:'künstliches Bauelement für die Synapsen-Funktion, u. a. aus Bismut-Eisenoxid'},
+    {term:'Einstellbarer Transistor', def:'künstliches Bauelement für die Neuronen-Funktion'},
+    {term:'Edge Computing', def:'Datenverarbeitung direkt am Sensor – spart Energie, schützt sensible Daten'}
+  ]}
+];
+
+var fillData = [
+ {id:'q3_3', target:'q3_3',
+  template:'Neuromorphe Chips sind vom {{0}} inspiriert. Sie nutzen {{1}}, um Synapsen nachzubilden, und Transistoren mit einstellbarer {{2}}, um Neuronen nachzubilden. Dadurch können Daten am gleichen Ort {{3}} und {{4}} werden, ohne dass ein energieintensiver {{5}} nötig ist.',
+  blanks:[
+    {options:['Gehirn','Computer','Internet'], correct:0},
+    {options:['Memristoren','Widerstände','Kondensatoren'], correct:0},
+    {options:['Schwellspannung','Frequenz','Lautstärke'], correct:0},
+    {options:['verarbeitet','gelöscht','kopiert'], correct:0},
+    {options:['gespeichert','versendet','verworfen'], correct:0},
+    {options:['Datentransfer','Stromausfall','Bildschirm'], correct:0}
+  ]}
+];
+
+/* register all ids for "answered all" check */
+[].concat(singleData, multiData, truefalseData, matchData, fillData).forEach(function(q){ QUESTION_META[q.id]=true; });
+
+/* ================== Renderers ================== */
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+
+function renderSingle(q){
+  TOTAL_POSSIBLE += 1;
+  var host = document.getElementById(q.target);
+  var html = '<p class="ex-prompt">'+q.prompt+'</p><div class="options"></div><button class="btn-check">Prüfen</button><div class="ex-feedback"></div>';
+  host.innerHTML = html;
+  var optWrap = host.querySelector('.options');
+  q.options.forEach(function(opt, idx){
+    var label = document.createElement('label');
+    label.className='opt';
+    label.innerHTML = '<input type="radio" name="'+q.id+'" value="'+idx+'"><span>'+opt+'</span>';
+    optWrap.appendChild(label);
+  });
+  var btn = host.querySelector('.btn-check');
+  var fb = host.querySelector('.ex-feedback');
+  btn.addEventListener('click', function(){
+    var sel = host.querySelector('input[name="'+q.id+'"]:checked');
+    if(!sel){ return; }
+    var chosen = parseInt(sel.value,10);
+    var opts = host.querySelectorAll('.opt');
+    opts.forEach(function(o,idx){
+      o.classList.add('locked');
+      o.querySelector('input').disabled = true;
+      if(idx===q.correct){ o.classList.add('opt-correct'); }
+      else if(idx===chosen){ o.classList.add('opt-incorrect-pick'); }
+    });
+    var ok = chosen===q.correct;
+    fb.style.display='block';
+    fb.className = 'ex-feedback ' + (ok?'ok':'bad');
+    fb.innerHTML = '<b>'+(ok?'Richtig!':'Nicht ganz.')+'</b>'+q.explain;
+    btn.disabled = true;
+    setScore(q.id, ok?1:0);
+  });
+}
+
+function renderMulti(q){
+  TOTAL_POSSIBLE += 1;
+  var host = document.getElementById(q.target);
+  var html = '<p class="ex-prompt">'+q.prompt+'</p><div class="options"></div><button class="btn-check">Prüfen</button><div class="ex-feedback"></div>';
+  host.innerHTML = html;
+  var optWrap = host.querySelector('.options');
+  q.options.forEach(function(opt, idx){
+    var label = document.createElement('label');
+    label.className='opt';
+    label.innerHTML = '<input type="checkbox" value="'+idx+'"><span>'+opt+'</span>';
+    optWrap.appendChild(label);
+  });
+  var btn = host.querySelector('.btn-check');
+  var fb = host.querySelector('.ex-feedback');
+  btn.addEventListener('click', function(){
+    var boxes = host.querySelectorAll('.opt input');
+    var chosen = [];
+    boxes.forEach(function(b){ if(b.checked) chosen.push(parseInt(b.value,10)); });
+    var correctSet = q.correct.slice().sort().join(',');
+    var chosenSet = chosen.slice().sort().join(',');
+    var ok = correctSet===chosenSet;
+    var opts = host.querySelectorAll('.opt');
+    opts.forEach(function(o,idx){
+      o.classList.add('locked');
+      o.querySelector('input').disabled = true;
+      var isCorrectOpt = q.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if(isCorrectOpt){ o.classList.add('opt-correct'); }
+      else if(wasChosen){ o.classList.add('opt-incorrect-pick'); }
+    });
+    fb.style.display='block';
+    fb.className = 'ex-feedback ' + (ok?'ok':'bad');
+    fb.innerHTML = '<b>'+(ok?'Richtig!':'Nicht ganz – die richtigen Antworten sind jetzt grün markiert.')+'</b>'+q.explain;
+    btn.disabled = true;
+    setScore(q.id, ok?1:0);
+  });
+}
+
+function renderTruefalse(q){
+  TOTAL_POSSIBLE += q.items.length;
+  var host = document.getElementById(q.target);
+  var html = '<p class="ex-prompt">Richtig oder falsch?</p><div class="tf-list"></div><button class="btn-check">Prüfen</button><div class="ex-feedback"></div>';
+  host.innerHTML = html;
+  var list = host.querySelector('.tf-list');
+  var state = q.items.map(function(){ return null; });
+  q.items.forEach(function(item, idx){
+    var row = document.createElement('div');
+    row.className='tf-row';
+    row.innerHTML = '<span class="tf-text">'+item.text+'</span><span class="tf-btns"><button type="button" class="tf-btn" data-v="true">Richtig</button><button type="button" class="tf-btn" data-v="false">Falsch</button></span>';
+    list.appendChild(row);
+    row.querySelectorAll('.tf-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        row.querySelectorAll('.tf-btn').forEach(function(x){ x.classList.remove('sel'); });
+        b.classList.add('sel');
+        state[idx] = (b.getAttribute('data-v')==='true');
+      });
+    });
+  });
+  var btn = host.querySelector('.btn-check');
+  var fb = host.querySelector('.ex-feedback');
+  btn.addEventListener('click', function(){
+    var rows = list.querySelectorAll('.tf-row');
+    var correctCount = 0;
+    rows.forEach(function(row, idx){
+      var ok = state[idx] === q.items[idx].correct;
+      row.classList.add(ok?'ok':'bad');
+      if(ok) correctCount++;
+      row.querySelectorAll('.tf-btn').forEach(function(b){ b.disabled=true; });
+    });
+    fb.style.display='block';
+    var allOk = correctCount===q.items.length;
+    fb.className = 'ex-feedback ' + (allOk?'ok':'bad');
+    fb.innerHTML = '<b>'+correctCount+' von '+q.items.length+' richtig.</b>Grün markierte Aussagen hast du richtig eingeschätzt, rote falsch.';
+    btn.disabled = true;
+    setScore(q.id, correctCount);
+  });
+}
+
+function renderMatch(q){
+  TOTAL_POSSIBLE += q.pairs.length;
+  var host = document.getElementById(q.target);
+  var html = '<p class="ex-prompt">Ordne die passenden Begriffe und Erklärungen einander zu. Klicke zuerst links, dann rechts.</p>'+
+    '<div class="match-grid"><div class="match-col"><div class="match-col-title">Begriff</div><div class="left-col"></div></div>'+
+    '<div class="match-col"><div class="match-col-title">Erklärung</div><div class="right-col"></div></div></div>'+
+    '<p class="match-status">0 von '+q.pairs.length+' richtig zugeordnet.</p>';
+  host.innerHTML = html;
+  var leftCol = host.querySelector('.left-col');
+  var rightCol = host.querySelector('.right-col');
+  var status = host.querySelector('.match-status');
+
+  var leftOrder = q.pairs.map(function(p,idx){ return idx; });
+  var rightOrder = shuffle(leftOrder);
+
+  var selectedLeft = null;
+  var solvedCount = 0;
+  var pairHadMistake = {};
+
+  leftOrder.forEach(function(pIdx){
+    var b = document.createElement('button');
+    b.type='button'; b.className='m-item'; b.textContent = q.pairs[pIdx].term;
+    b.setAttribute('data-idx', pIdx);
+    leftCol.appendChild(b);
+    b.addEventListener('click', function(){
+      if(b.classList.contains('solved')) return;
+      leftCol.querySelectorAll('.m-item').forEach(function(x){ x.classList.remove('selected'); });
+      b.classList.add('selected');
+      selectedLeft = pIdx;
+    });
+  });
+
+  rightOrder.forEach(function(pIdx){
+    var b = document.createElement('button');
+    b.type='button'; b.className='m-item'; b.textContent = q.pairs[pIdx].def;
+    b.setAttribute('data-idx', pIdx);
+    rightCol.appendChild(b);
+    b.addEventListener('click', function(){
+      if(b.classList.contains('solved')) return;
+      if(selectedLeft===null) return;
+      var rIdx = parseInt(b.getAttribute('data-idx'),10);
+      var leftBtn = leftCol.querySelector('.m-item[data-idx="'+selectedLeft+'"]');
+      if(rIdx===selectedLeft){
+        b.classList.remove('selected');
+        b.classList.add('solved');
+        leftBtn.classList.remove('selected');
+        leftBtn.classList.add('solved');
+        solvedCount++;
+        selectedLeft = null;
+        status.textContent = solvedCount+' von '+q.pairs.length+' richtig zugeordnet.';
+        if(solvedCount===q.pairs.length){
+          var earned = q.pairs.length - Object.keys(pairHadMistake).length;
+          if(earned<0) earned=0;
+          status.textContent = 'Alle Paare richtig zugeordnet! ('+earned+' / '+q.pairs.length+' Punkte, ohne Fehlversuch erzielt)';
+          setScore(q.id, earned);
+        }
+      } else {
+        pairHadMistake[selectedLeft] = true;
+        b.classList.add('wrong-flash');
+        leftBtn.classList.add('wrong-flash');
+        setTimeout(function(){
+          b.classList.remove('wrong-flash');
+          leftBtn.classList.remove('wrong-flash','selected');
+        }, 500);
+        selectedLeft = null;
+      }
+    });
+  });
+}
+
+function renderFill(q){
+  TOTAL_POSSIBLE += q.blanks.length;
+  var host = document.getElementById(q.target);
+  var text = q.template;
+  q.blanks.forEach(function(blank, idx){
+    var opts = shuffle(blank.options.map(function(o,i){ return {text:o, orig:i}; }));
+    var selectHtml = '<select data-blank="'+idx+'"><option value="-1">wähle …</option>';
+    opts.forEach(function(o){
+      selectHtml += '<option value="'+o.orig+'">'+o.text+'</option>';
+    });
+    selectHtml += '</select>';
+    text = text.replace('{{'+idx+'}}', selectHtml);
+  });
+  host.innerHTML = '<p class="ex-prompt">Ergänze den Lückentext:</p><p class="fill-text">'+text+'</p><button class="btn-check">Prüfen</button><div class="ex-feedback"></div>';
+  var btn = host.querySelector('.btn-check');
+  var fb = host.querySelector('.ex-feedback');
+  btn.addEventListener('click', function(){
+    var selects = host.querySelectorAll('select');
+    var correctCount = 0;
+    selects.forEach(function(sel){
+      var bIdx = parseInt(sel.getAttribute('data-blank'),10);
+      var val = parseInt(sel.value,10);
+      var ok = val === q.blanks[bIdx].correct;
+      sel.classList.remove('ok','bad');
+      sel.classList.add(ok?'ok':'bad');
+      sel.disabled = true;
+      if(ok) correctCount++;
+    });
+    fb.style.display='block';
+    var allOk = correctCount===q.blanks.length;
+    fb.className = 'ex-feedback ' + (allOk?'ok':'bad');
+    fb.innerHTML = '<b>'+correctCount+' von '+q.blanks.length+' Lücken richtig.</b>Grün markierte Felder sind korrekt, rote falsch.';
+    btn.disabled = true;
+    setScore(q.id, correctCount);
+  });
+}
+
+/* ================== Init ================== */
+singleData.forEach(renderSingle);
+multiData.forEach(renderMulti);
+truefalseData.forEach(renderTruefalse);
+matchData.forEach(renderMatch);
+fillData.forEach(renderFill);
+refreshScoreBar();
+</script>
+</body>
+</html>
